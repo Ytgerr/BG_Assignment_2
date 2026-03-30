@@ -19,9 +19,9 @@ services:
     tty: true
     working_dir: /app
     # You can comment the entrypoint to run the script manually inside the container
-    entrypoint: 
-      - bash
-      - /app/app.sh
+    #entrypoint: 
+    #  - bash
+    #  - /app/app.sh
     
   cluster-slave-1:
     image: firasj/spark-docker-cluster
@@ -43,7 +43,7 @@ services:
     image: cassandra
     container_name: cassandra-server
     ports:
-      - "7000:7000"
+      - "9042:9042"
     networks:
       - spark-cluster
     

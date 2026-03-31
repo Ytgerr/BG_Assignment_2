@@ -18,10 +18,10 @@ services:
     hostname: cluster-master
     tty: true
     working_dir: /app
-    # You can comment the entrypoint to run the script manually inside the container
-    #entrypoint: 
-    #  - bash
-    #  - /app/app.sh
+    entrypoint:
+      - bash
+      - -c
+      - "sed -i 's/\\r$//' /app/*.sh /app/mapreduce/*.py /app/*.py && bash /app/app.sh"
     
   cluster-slave-1:
     image: firasj/spark-docker-cluster
@@ -30,15 +30,7 @@ services:
       - spark-cluster
     hostname: cluster-slave-1
     tty: true
-  # cluster-slave-2:
-  #   image: firasj/spark-docker-cluster
-  #   container_name: cluster-slave-2
-  #   networks:
-  #     - spark-cluster
-  #   depends_on:
-  #     - cluster-slave-1
-  #   hostname: cluster-slave-2
-  #   tty: true
+
   cassandra-server:
     image: cassandra
     container_name: cassandra-server
@@ -46,7 +38,17 @@ services:
       - "9042:9042"
     networks:
       - spark-cluster
-    
+    environment:
+      - CASSANDRA_CLUSTER_NAME=SearchEngineCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
 
 networks:
   spark-cluster:

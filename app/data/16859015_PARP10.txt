@@ -1,0 +1,1 @@
+Poly [ADP-ribose] polymerase 10 is an enzyme that in humans is encoded by the PARP10 gene. Poly(ADP-ribose) polymerases (PARPs), such as PARP10, regulate gene transcription by altering chromatin organization by adding ADP-ribose to histones. PARPs can also function as transcriptional cofactors (Yu et al., 2005).[supplied by OMIM] ==References== ==Further reading== * * * * * * * *

@@ -1,0 +1,1 @@
+PAPR may refer to: * Peak-to-average power ratio, the peak divided by the root mean square (RMS) of the waveform * Power Architecture Platform Reference *Powered air-purifying respirator * Prospect Creek Airport (ICAO location indicator: PAPR), in Prospect Creek, Alaska, United States * papR (Bt), a component of quorum sensing in Bacillus thuringiensis

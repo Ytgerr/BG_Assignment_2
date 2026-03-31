@@ -1,0 +1,1 @@
+PATR-II is a linguistic formalism used in computational linguistics, developed by Stuart M. Shieber. It uses context-free grammar rules and feature constraints on these rules. == See also == * Head-driven phrase structure grammar ==External links== * PC-PATR, an implementation of PATR-II for PC and Unix systems. Category:Computational linguistics

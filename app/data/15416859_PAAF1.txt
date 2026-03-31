@@ -1,0 +1,1 @@
+Proteasomal ATPase-associated factor 1 is an enzyme that in humans is encoded by the PAAF1 gene. == Interactions == PAAF1 has been shown to interact with PSMD10. == References == == Further reading == * * *

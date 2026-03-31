@@ -1,8 +1,31 @@
 #!/bin/bash
-echo "This script include commands to run mapreduce jobs using hadoop streaming to index documents"
 
-echo "Input path is :"
-echo $1
+INPUT_PATH=${1:-/input/data}
 
+echo "=========================================="
+echo "Running full indexing pipeline"
+echo "Input path: $INPUT_PATH"
+echo "=========================================="
 
-hdfs dfs -ls /
+echo ""
+echo "Step 1: Creating index with MapReduce..."
+bash create_index.sh "$INPUT_PATH"
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Index creation failed!"
+    exit 1
+fi
+
+echo ""
+echo "Step 2: Storing index in Cassandra/ScyllaDB..."
+bash store_index.sh
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Storing index failed!"
+    exit 1
+fi
+
+echo ""
+echo "=========================================="
+echo "Full indexing pipeline completed!"
+echo "=========================================="

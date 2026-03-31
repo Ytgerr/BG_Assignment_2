@@ -28,46 +28,32 @@ The search engine follows a three-tier architecture:
 
 #### Pipeline 1 — Term Frequency (TF)
 
-| Stage | File | Input → Output |
-|-------|------|----------------|
-| Mapper | `mapper1.py` | `<doc_id>\t<title>\t<text>` → `<term>\t<doc_id>\t<title>\t1\t<dl>` |
-| Reducer | `reducer1.py` | aggregates counts → `<term>\t<doc_id>\t<title>\t<tf>\t<dl>` |
-
-Result stored in `/indexer/index`.
+- **Mapper** (`mapper1.py`): reads each document line, tokenizes the text (lowercase, remove punctuation, split by whitespace), and emits `<term>\t<doc_id>\t<title>\t1\t<dl>` for each token.
+- **Reducer** (`reducer1.py`): aggregates counts per (term, doc_id) pair → `<term>\t<doc_id>\t<title>\t<tf>\t<dl>`.
+- Result stored in `/indexer/index`.
 
 #### Pipeline 2 — Document Frequency (DF)
 
-| Stage | File | Input → Output |
-|-------|------|----------------|
-| Mapper | `mapper2.py` | Pipeline 1 output → `<term>\t1` |
-| Reducer | `reducer2.py` | aggregates → `<term>\t<df>` |
-
-Result stored in `/indexer/vocab`.
+- **Mapper** (`mapper2.py`): reads Pipeline 1 output, emits `<term>\t1` for each term-document pair.
+- **Reducer** (`reducer2.py`): aggregates document counts per term → `<term>\t<df>`.
+- Result stored in `/indexer/vocab`.
 
 #### Pipeline 3 — Document & Corpus Statistics
 
-| Stage | File | Input → Output |
-|-------|------|----------------|
-| Mapper | `mapper3.py` | raw input → `DOC_STAT\t<doc_id>\t<title>\t<dl>` |
-| Reducer | `reducer3.py` | collects all docs → per-doc stats + `CORPUS_STATS\t<N>\t<avg_dl>\t<total>` |
-
-Result stored in `/indexer/stats`.
+- **Mapper** (`mapper3.py`): reads raw input, tokenizes, emits `DOC_STAT\t<doc_id>\t<title>\t<dl>`.
+- **Reducer** (`reducer3.py`): collects all docs, outputs per-doc stats and a `CORPUS_STATS\t<N>\t<avg_dl>\t<total>` summary line.
+- Result stored in `/indexer/stats`.
 
 ### 1.4 Cassandra Storage Schema
 
 Keyspace: `search_engine`. Four tables:
 
-| Table | Primary Key | Columns | Purpose |
-|-------|-------------|---------|---------|
-| `term_index` | `(term, doc_id)` | `doc_title`, `tf`, `dl` | Inverted index |
-| `vocabulary` | `term` | `df` | Document frequency per term |
-| `doc_stats` | `doc_id` | `doc_title`, `dl` | Document metadata |
-| `corpus_stats` | `id` | `num_docs`, `avg_dl`, `total_tokens` | Global corpus info |
+- **`term_index`** — primary key `(term, doc_id)`, columns: `doc_title`, `tf`, `dl`. Inverted index; partition by term enables efficient per-term lookups.
+- **`vocabulary`** — primary key `term`, column: `df`. Document frequency per term.
+- **`doc_stats`** — primary key `doc_id`, columns: `doc_title`, `dl`. Document metadata.
+- **`corpus_stats`** — primary key `id`, columns: `num_docs`, `avg_dl`, `total_tokens`. Global corpus info.
 
-Design rationale:
-
-- `term_index` uses composite PK `(term, doc_id)` — partition by term enables efficient per-term lookups.
-- Batch inserts (batch size 50) for throughput.
+Batch inserts (batch size 50) are used for throughput.
 
 ### 1.5 BM25 Ranking
 
@@ -126,30 +112,18 @@ docker exec -it cluster-master bash -c "cd /app && bash search.sh 'your query he
 
 ### 2.4 Sample Queries
 
-| Query | Expected results |
-|-------|-----------------|
-| `machine learning algorithms` | Documents about ML, AI, computational algorithms |
-| `history of ancient civilizations` | Documents about historical civilizations (rare terms like "civilizations" boost IDF) |
-| `climate change effects` | Documents about environmental science, ecology |
+- **`machine learning algorithms`** — documents about ML, AI, computational algorithms.
+- **`play game in school`** — documents about games (rare terms like "school" boost IDF).
+- **`climate change in russia`** — documents about environmental science, ecology.
 
 ---
 
 ## 3. Component Summary
 
-| Component | Files | Technology |
-|-----------|-------|------------|
-| Data Preparation | `prepare_data.py`, `prepare_data.sh` | PySpark |
-| TF Computation | `mapper1.py`, `reducer1.py` | Hadoop Streaming |
-| DF Computation | `mapper2.py`, `reducer2.py` | Hadoop Streaming |
-| Doc Statistics | `mapper3.py`, `reducer3.py` | Hadoop Streaming |
-| Index Storage | `app.py`, `store_index.sh` | Python cassandra-driver |
-| BM25 Ranking | `query.py`, `search.sh` | PySpark RDD |
-| Orchestration | `app.sh`, `index.sh`, `create_index.sh` | Bash |
-
----
-
-## References
-
-1. Robertson, S., & Zaragoza, H. (2009). *The Probabilistic Relevance Framework: BM25 and Beyond.* Foundations and Trends in Information Retrieval.
-2. <https://en.wikipedia.org/wiki/Okapi_BM25>
-3. <https://www.ai-bites.net/tf-idf-and-bm25-for-rag-a-complete-guide/>
+- **Data Preparation:** `prepare_data.py`, `prepare_data.sh` (PySpark)
+- **TF Computation:** `mapper1.py`, `reducer1.py` (Hadoop Streaming)
+- **DF Computation:** `mapper2.py`, `reducer2.py` (Hadoop Streaming)
+- **Doc Statistics:** `mapper3.py`, `reducer3.py` (Hadoop Streaming)
+- **Index Storage:** `app.py`, `store_index.sh` (Python cassandra-driver)
+- **BM25 Ranking:** `query.py`, `search.sh` (PySpark RDD)
+- **Orchestration:** `app.sh`, `index.sh`, `create_index.sh` (Bash)

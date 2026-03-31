@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "=========================================="
-echo "Running BM25 Search Engine"
+echo "Running Search Engine"
 echo "=========================================="
 
 if [ -z "$1" ]; then

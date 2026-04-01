@@ -17,6 +17,7 @@ services:
       - cassandra-server
     hostname: cluster-master
     tty: true
+    stdin_open: true
     working_dir: /app
     entrypoint:
       - bash

@@ -38,15 +38,29 @@ source .venv/bin/activate
 export PYSPARK_DRIVER_PYTHON=$(which python)
 unset PYSPARK_PYTHON
 
+hdfs dfs -mkdir -p /data
 hdfs dfs -put -f "$FILE_PATH" /data/
+
+echo "Removing old entry for doc_id=$DOC_ID from existing index input (if any)..."
+MAIN_INPUT="/input/data/part-00000"
+if hdfs dfs -test -e "$MAIN_INPUT" 2>/dev/null; then
+    hdfs dfs -cat "$MAIN_INPUT" | grep -v "^${DOC_ID}	" > /tmp/filtered_input.txt
+    hdfs dfs -put -f /tmp/filtered_input.txt "$MAIN_INPUT"
+    rm -f /tmp/filtered_input.txt
+fi
+
+hdfs dfs -rm -f "/input/data/new_doc_${DOC_ID}" 2>/dev/null
 
 TEMP_INPUT="/tmp/new_doc_input"
 hdfs dfs -rm -r "$TEMP_INPUT" 2>/dev/null
 
-echo -e "${DOC_ID}\t${DOC_TITLE}\t${DOC_TEXT}" > /tmp/new_doc_line.txt
+printf '%s\t%s\t%s\n' "$DOC_ID" "$DOC_TITLE" "$DOC_TEXT" > /tmp/new_doc_line.txt
+hdfs dfs -mkdir -p "$TEMP_INPUT"
 hdfs dfs -put /tmp/new_doc_line.txt "$TEMP_INPUT/part-00000"
+rm -f /tmp/new_doc_line.txt
 
 hdfs dfs -cp "$TEMP_INPUT/part-00000" "/input/data/new_doc_${DOC_ID}"
+hdfs dfs -rm -r "$TEMP_INPUT" 2>/dev/null
 
 echo "Document added to HDFS input."
 
